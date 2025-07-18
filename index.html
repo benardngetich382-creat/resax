@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>School Results System</title>
+  <style>
+    /* Simplified CSS */
+    body { font-family: Arial; max-width: 800px; margin: 0 auto; padding: 20px; }
+    .tab { display: none; }
+    .tab.active { display: block; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+
+<h1>School Results (Simplified)</h1>
+
+<!-- Tabs -->
+<button onclick="openTab('upload')">Upload</button>
+<button onclick="openTab('view')">View</button>
+
+<!-- Upload Tab -->
+<div id="upload" class="tab active">
+  <h2>Add Student Results</h2>
+  <form onsubmit="saveResults(event)">
+    <input type="text" id="regNumber" placeholder="Registration No" required>
+    <input type="text" id="name" placeholder="Student Name" required>
+    <select id="grade" required>
+      <option value="">Select Grade</option>
+      <option>Grade 1</option>
+      <option>Grade 2</option>
+    </select>
+    <button type="submit">Save</button>
+  </form>
+</div>
+
+<!-- View Tab -->
+<div id="view" class="tab">
+  <h2>Student Results</h2>
+  <table id="resultsTable">
+    <tr>
+      <th>Reg No</th>
+      <th>Name</th>
+      <th>Grade</th>
+    </tr>
+    <!-- Results will appear here -->
+  </table>
+</div>
+
+<script>
+// Simplified JavaScript
+function openTab(tabName) {
+  document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+  document.getElementById(tabName).classList.add('active');
+}
+
+function saveResults(e) {
+  e.preventDefault();
+  const student = {
+    regNumber: document.getElementById('regNumber').value,
+    name: document.getElementById('name').value,
+    grade: document.getElementById('grade').value
+  };
+  
+  // Save to localStorage
+  let students = JSON.parse(localStorage.getItem('students')) || [];
+  students.push(student);
+  localStorage.setItem('students', JSON.stringify(students));
+  
+  alert('Saved!');
+  updateResultsTable();
+}
+
+function updateResultsTable() {
+  const students = JSON.parse(localStorage.getItem('students')) || [];
+  const table = document.getElementById('resultsTable');
+  
+  // Clear existing rows (except header)
+  while (table.rows.length > 1) table.deleteRow(1);
+  
+  // Add new rows
+  students.forEach(student => {
+    const row = table.insertRow();
+    row.insertCell(0).textContent = student.regNumber;
+    row.insertCell(1).textContent = student.name;
+    row.insertCell(2).textContent = student.grade;
+  });
+}
+
+// Load saved results on page load
+updateResultsTable();
+</script>
+
+</body>
+</html>
