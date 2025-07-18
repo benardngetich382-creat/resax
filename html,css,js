@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Results Management System</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>School Results Management System</h1>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="upload">Upload Results</button>
+            <button class="tab-btn" data-tab="rubric">Rubric Settings</button>
+            <button class="tab-btn" data-tab="view">View Results</button>
+            <button class="tab-btn" data-tab="generate">Generate Reports</button>
+        </div>
+
+        <div id="upload" class="tab-content active">
+            <h2>Upload Student Results</h2>
+            <form id="resultForm">
+                <div class="form-group">
+                    <label for="regNumber">Registration Number:</label>
+                    <input type="text" id="regNumber" required>
+                </div>
+                <div class="form-group">
+                    <label for="studentName">Student Name:</label>
+                    <input type="text" id="studentName" required>
+                </div>
+                <div class="form-group">
+                    <label for="grade">Grade:</label>
+                    <select id="grade" required>
+                        <option value="">Select Grade</option>
+                        <option value="Grade 1">Grade 1</option>
+                        <option value="Grade 2">Grade 2</option>
+                        <option value="Grade 3">Grade 3</option>
+                    </select>
+                </div>
+                
+                <div id="subjectContainer">
+                    <div class="subject-entry">
+                        <div class="form-group">
+                            <label for="subject1">Learning Area:</label>
+                            <input type="text" class="subject" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Marks Obtained:</label>
+                            <input type="number" class="marks" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Out Of:</label>
+                            <input type="number" class="outOf" required>
+                        </div>
+                        <button type="button" class="remove-subject">Remove</button>
+                    </div>
+                </div>
+                
+                <button type="button" id="addSubject">Add Another Learning Area</button>
+                <button type="submit">Save Results</button>
+            </form>
+        </div>
+
+        <div id="rubric" class="tab-content">
+            <h2>Rubric Settings</h2>
+            <form id="rubricForm">
+                <div id="rubricRanges">
+                    <div class="rubric-range">
+                        <div class="form-group">
+                            <label>Percentage From:</label>
+                            <input type="number" class="from" min="0" max="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Percentage To:</label>
+                            <input type="number" class="to" min="0" max="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Rubric Score:</label>
+                            <input type="number" class="score" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Grade:</label>
+                            <input type="text" class="grade" required>
+                        </div>
+                        <button type="button" class="remove-range">Remove</button>
+                    </div>
+                </div>
+                <button type="button" id="addRange">Add Another Range</button>
+                <button type="submit">Save Rubric Settings</button>
+            </form>
+        </div>
+
+        <div id="view" class="tab-content">
+            <h2>View Results</h2>
+            <div class="form-group">
+                <label for="filterGrade">Filter by Grade:</label>
+                <select id="filterGrade">
+                    <option value="">All Grades</option>
+                    <option value="Grade 1">Grade 1</option>
+                    <option value="Grade 2">Grade 2</option>
+                    <option value="Grade 3">Grade 3</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="searchStudent">Search Student:</label>
+                <input type="text" id="searchStudent" placeholder="Enter name or registration number">
+            </div>
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>Reg. No.</th>
+                        <th>Name</th>
+                        <th>Grade</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody">
+                    <!-- Results will be populated here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div id="generate" class="tab-content">
+            <h2>Generate Reports</h2>
+            <div class="form-group">
+                <label for="reportGrade">Select Grade:</label>
+                <select id="reportGrade" required>
+                    <option value="">Select Grade</option>
+                    <option value="Grade 1">Grade 1</option>
+                    <option value="Grade 2">Grade 2</option>
+                    <option value="Grade 3">Grade 3</option>
+                </select>
+            </div>
+            <button id="generateAllReports">Generate Reports for All Students</button>
+            <div id="singleReportSection">
+                <div class="form-group">
+                    <label for="reportStudent">Select Student:</label>
+                    <select id="reportStudent" disabled>
+                        <option value="">Select a grade first</option>
+                    </select>
+                </div>
+                <button id="generateSingleReport">Generate Report for Selected Student</button>
+            </div>
+        </div>
+
+        <!-- Report Preview Modal -->
+        <div id="reportModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <div id="reportPreview">
+                    <!-- Report will be generated here -->
+                </div>
+                <button id="downloadPdf">Download PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+}
+
+body {
+    background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px 0;
+    background-color: #2c3e50;
+    color: white;
+    border-radius: 5px;
+}
+
+.tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+}
+
+.tab-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.tab-btn.active {
+    border-bottom: 3px solid #2c3e50;
+    font-weight: bold;
+}
+
+.tab-content {
+    display: none;
+    padding: 20px;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+button {
+    padding: 10px 15px;
+    background-color: #2c3e50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+button:hover {
+    background-color: #1a252f;
+}
+
+.subject-entry, .rubric-range {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    position: relative;
+}
+
+.remove-subject, .remove-range {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #e74c3c;
+    color: white;
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #2c3e50;
+    color: white;
+}
+
+tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 900px;
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    right: 20px;
+    top: 10px;
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: black;
+}
+
+/* Report styles */
+#reportPreview {
+    padding: 20px;
+    background-color: white;
+}
+
+.report-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.report-header h2 {
+    color: #2c3e50;
+}
+
+.student-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.results-table {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.results-table th {
+    background-color: #2c3e50;
+    color: white;
+}
+
+.chart-container {
+    width: 100%;
+    height: 300px;
+    margin: 20px 0;
+}
+
+.comments-section {
+    margin-top: 30px;
+}
+
+.comment-box {
+    margin-bottom: 20px;
+}
+
+.signature-line {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 50px;
+}
+
+.stamp-area {
+    text-align: right;
+    margin-top: 30px;
+}
+
+.footer-note {
+    margin-top: 30px;
+    font-size: 12px;
+    text-align: center;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+}
+// Initialize the jsPDF library
+const { jsPDF } = window.jspdf;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab functionality
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.getAttribute('data-tab');
+            
+            // Remove active class from all buttons and contents
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            
+            // Add active class to clicked button and corresponding content
+            btn.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            
+            // Refresh data if viewing results tab
+            if (tabId === 'view') {
+                displayResults();
+            }
+        });
+    });
+    
+    // Add subject functionality
+    const addSubjectBtn = document.getElementById('addSubject');
+    const subjectContainer = document.getElementById('subjectContainer');
+    
+    addSubjectBtn.addEventListener('click', () => {
+        const newSubject = document.querySelector('.subject-entry').cloneNode(true);
+        newSubject.querySelectorAll('input').forEach(input => input.value = '');
+        subjectContainer.appendChild(newSubject);
+        
+        // Add event listener to remove button
+        newSubject.querySelector('.remove-subject').addEventListener('click', () => {
+            if (document.querySelectorAll('.subject-entry').length > 1) {
+                newSubject.remove();
+            } else {
+                alert('You must have at least one learning area.');
+            }
+        });
+    });
+    
+    // Add rubric range functionality
+    const addRangeBtn = document.getElementById('addRange');
+    const rubricRanges = document.getElementById('rubricRanges');
+    
+    addRangeBtn.addEventListener('click', () => {
+        const newRange = document.querySelector('.rubric-range').cloneNode(true);
+        newRange.querySelectorAll('input').forEach(input => input.value = '');
+        rubricRanges.appendChild(newRange);
+        
+        // Add event listener to remove button
+        newRange.querySelector('.remove-range').addEventListener('click', () => {
+            if (document.querySelectorAll('.rubric-range').length > 1) {
+                newRange.remove();
+            } else {
+                alert('You must have at least one rubric range.');
+            }
+        });
+    });
+    
+    // Form submission for results
+    const resultForm = document.getElementById('resultForm');
+    resultForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const regNumber = document.getElementById('regNumber').value;
+        const studentName = document.getElementById('studentName').value;
+        const grade = document.getElementById('grade').value;
+        
+        const subjects = [];
+        document.querySelectorAll('.subject-entry').forEach(entry => {
+            const subject = entry.querySelector('.subject').value;
+            const marks = parseFloat(entry.querySelector('.marks').value);
+            const outOf = parseFloat(entry.querySelector('.outOf').value);
+            
+            subjects.push({
+                subject,
+                marks,
+                outOf
+            });
+        });
+        
+        // Get existing results or initialize empty array
+        let results = JSON.parse(localStorage.getItem('results')) || [];
+        
+        // Check if student already exists
+        const existingIndex = results.findIndex(r => r.regNumber === regNumber && r.grade === grade);
+        
+        if (existingIndex >= 0) {
+            // Update existing record
+            results[existingIndex] = {
+                regNumber,
+                studentName,
+                grade,
+                subjects
+            };
+        } else {
+            // Add new record
+            results.push({
+                regNumber,
+                studentName,
+                grade,
+                subjects
+            });
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('results', JSON.stringify(results));
+        
+        // Calculate positions
+        calculatePositions();
+        
+        alert('Results saved successfully!');
+        resultForm.reset();
+    });
+    
+    // Form submission for rubric settings
+    const rubricForm = document.getElementById('rubricForm');
+    rubricForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const rubricRanges = [];
+        document.querySelectorAll('.rubric-range').forEach(range => {
+            const from = parseFloat(range.querySelector('.from').value);
+            const to = parseFloat(range.querySelector('.to').value);
+            const score = parseFloat(range.querySelector('.score').value);
+            const grade = range.querySelector('.grade').value;
+            
+            rubricRanges.push({
+                from,
+                to,
+                score,
+                grade
+            });
+        });
+        
+        // Save to localStorage
+        localStorage.setItem('rubricRanges', JSON.stringify(rubricRanges));
+        
+        alert('Rubric settings saved successfully!');
+        
+        // Recalculate positions if results exist
+        if (localStorage.getItem('results')) {
+            calculatePositions();
+        }
+    });
+    
+    // Load rubric settings if they exist
+    if (localStorage.getItem('rubricRanges')) {
+        const savedRanges = JSON.parse(localStorage.getItem('rubricRanges'));
+        const firstRange = document.querySelector('.rubric-range');
+        
+        // Clear existing ranges except the first one
+        while (rubricRanges.children.length > 1) {
+            rubricRanges.removeChild(rubricRanges.lastChild);
+        }
+        
+        // Populate first range
+        firstRange.querySelector('.from').value = savedRanges[0].from;
+        firstRange.querySelector('.to').value = savedRanges[0].to;
+        firstRange.querySelector('.score').value = savedRanges[0].score;
+        firstRange.querySelector('.grade').value = savedRanges[0].grade;
+        
+        // Add additional ranges
+        for (let i = 1; i < savedRanges.length; i++) {
+            const newRange = firstRange.cloneNode(true);
+            newRange.querySelector('.from').value = savedRanges[i].from;
+            newRange.querySelector('.to').value = savedRanges[i].to;
+            newRange.querySelector('.score').value = savedRanges[i].score;
+            newRange.querySelector('.grade').value = savedRanges[i].grade;
+            rubricRanges.appendChild(newRange);
+            
+            // Add event listener to remove button
+            newRange.querySelector('.remove-range').addEventListener('click', () => {
+                if (document.querySelectorAll('.rubric-range').length > 1) {
+                    newRange.remove();
+                } else {
+                    alert('You must have at least one rubric range.');
+                }
+            });
+        }
+    }
+    
+    // Filter results functionality
+    const filterGrade = document.getElementById('filterGrade');
+    const searchStudent = document.getElementById('searchStudent');
+    
+    filterGrade.addEventListener('change', displayResults);
+    searchStudent.addEventListener('input', displayResults);
+    
+    // Report generation grade selection
+    const reportGrade = document.getElementById('reportGrade');
+    const reportStudent = document.getElementById('reportStudent');
+    
+    reportGrade.addEventListener('change', function() {
+        reportStudent.disabled = !this.value;
+        
+        if (this.value) {
+            // Populate students dropdown
+            const results = JSON.parse(localStorage.getItem('results')) || [];
+            const gradeStudents = results.filter(r => r.grade === this.value);
+            
+            reportStudent.innerHTML = '<option value="">Select Student</option>';
+            gradeStudents.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.regNumber;
+                option.textContent = `${student.studentName} (${student.regNumber})`;
+                reportStudent.appendChild(option);
+            });
+        } else {
+            reportStudent.innerHTML = '<option value="">Select a grade first</option>';
+        }
+    });
+    
+    // Generate single report
+    const generateSingleReport = document.getElementById('generateSingleReport');
+    generateSingleReport.addEventListener('click', function() {
+        const regNumber = reportStudent.value;
+        if (!regNumber) {
+            alert('Please select a student');
+            return;
+        }
+        
+        generateReport(regNumber);
+    });
+    
+    // Generate all reports for a grade
+    const generateAllReports = document.getElementById('generateAllReports');
+    generateAllReports.addEventListener('click', function() {
+        const grade = reportGrade.value;
+        if (!grade) {
+            alert('Please select a grade');
+            return;
+        }
+        
+        const results = JSON.parse(localStorage.getItem('results')) || [];
+        const gradeStudents = results.filter(r => r.grade === grade);
+        
+        if (gradeStudents.length === 0) {
+            alert('No students found for this grade');
+            return;
+        }
+        
+        if (confirm(`Generate reports for all ${gradeStudents.length} students in ${grade}?`)) {
+            gradeStudents.forEach(student => {
+                generateReport(student.regNumber, true);
+            });
+            alert('All reports generated successfully!');
+        }
+    });
+    
+    // Modal functionality
+    const modal = document.getElementById('reportModal');
+    const closeBtn = document.querySelector('.close');
+    
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+    
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+    
+    // Download PDF button
+    const downloadPdf = document.getElementById('downloadPdf');
+    downloadPdf.addEventListener('click', generatePdf);
+});
+
+// Display results in the view tab
+function displayResults() {
+    const resultsBody = document.getElementById('resultsBody');
+    resultsBody.innerHTML = '';
+    
+    const filterGrade = document.getElementById('filterGrade').value;
+    const searchTerm = document.getElementById('searchStudent').value.toLowerCase();
+    
+    let results = JSON.parse(localStorage.getItem('results')) || [];
+    
+    // Apply filters
+    if (filterGrade) {
+        results = results.filter(r => r.grade === filterGrade);
+    }
+    
+    if (searchTerm) {
+        results = results.filter(r => 
+            r.studentName.toLowerCase().includes(searchTerm) || 
+            r.regNumber.toLowerCase().includes(searchTerm)
+        );
+    }
+    
+    // Sort by grade and name
+    results.sort((a, b) => {
+        if (a.grade !== b.grade) {
+            return a.grade.localeCompare(b.grade);
+        }
+        return a.studentName.localeCompare(b.studentName);
+    });
+    
+    // Display results
+    results.forEach(result => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td>${result.regNumber}</td>
+            <td>${result.studentName}</td>
+            <td>${result.grade}</td>
+            <td>
+                <button class="view-btn" data-reg="${result.regNumber}">View Details</button>
+                <button class="report-btn" data-reg="${result.regNumber}">Generate Report</button>
+            </td>
+        `;
+        
+        resultsBody.appendChild(row);
+    });
+    
+    // Add event listeners to buttons
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            viewStudentDetails(this.getAttribute('data-reg'));
+        });
+    });
+    
+    document.querySelectorAll('.report-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            generateReport(this.getAttribute('data-reg'));
+        });
+    });
+}
+
+// View student details
+function viewStudentDetails(regNumber) {
+    const results = JSON.parse(localStorage.getItem('results')) || [];
+    const student = results.find(r => r.regNumber === regNumber);
+    
+    if (!student) {
+        alert('Student not found');
+        return;
+    }
+    
+    // Calculate averages and rubric scores
+    const rubricRanges = JSON.parse(localStorage.getItem('rubricRanges')) || [];
+    let totalRubricScore = 0;
+    let subjectCount = 0;
+    
+    let detailsHTML = `
+        <h3>${student.studentName} (${student.regNumber}) - ${student.grade}</h3>
+        <table class="student-details">
+            <thead>
+                <tr>
+                    <th>Learning Area</th>
+                    <th>Marks</th>
+                    <th>Out Of</th>
+                    <th>Percentage</th>
+                    <th>Rubric Score</th>
+                    <th>Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    student.subjects.forEach(subject => {
+        const percentage = (subject.marks / subject.outOf) * 100;
+        const rubricInfo = getRubricInfo(percentage, rubricRanges);
+        
+        detailsHTML += `
+            <tr>
+                <td>${subject.subject}</td>
+                <td>${subject.marks}</td>
+                <td>${subject.outOf}</td>
+                <td>${percentage.toFixed(2)}%</td>
+                <td>${rubricInfo.score}</td>
+                <td>${rubricInfo.grade}</td>
+            </tr>
+        `;
+        
+        totalRubricScore += rubricInfo.score;
+        subjectCount++;
+    });
+    
+    const averageRubricScore = subjectCount > 0 ? (totalRubricScore / subjectCount).toFixed(2) : 0;
+    
+    detailsHTML += `
+            </tbody>
+        </table>
+        <p><strong>Average Rubric Score:</strong> ${averageRubricScore}</p>
+        <p><strong>Position in Class:</strong> ${student.position || 'Not calculated'}</p>
+    `;
+    
+    // Show in modal
+    const reportPreview = document.getElementById('reportPreview');
+    reportPreview.innerHTML = detailsHTML;
+    
+    const modal = document.getElementById('reportModal');
+    modal.style.display = 'block';
+    
+    // Hide download button for details view
+    document.getElementById('downloadPdf').style.display = 'none';
+}
+
+// Generate report for a student
+function generateReport(regNumber, silent = false) {
+    const results = JSON.parse(localStorage.getItem('results')) || [];
+    const student = results.find(r => r.regNumber === regNumber);
+    
+    if (!student) {
+        alert('Student not found');
+        return;
+    }
+    
+    const rubricRanges = JSON.parse(localStorage.getItem('rubricRanges')) || [];
+    const gradeStudents = results.filter(r => r.grade === student.grade);
+    
+    // Calculate subject means
+    const subjectMeans = {};
+    const subjectCounts = {};
+    
+    gradeStudents.forEach(s => {
+        s.subjects.forEach(sub => {
+            if (!subjectMeans[sub.subject]) {
+                subjectMeans[sub.subject] = 0;
+                subjectCounts[sub.subject] = 0;
+            }
+            const percentage = (sub.marks / sub.outOf) * 100;
+            subjectMeans[sub.subject] += percentage;
+            subjectCounts[sub.subject]++;
+        });
+    });
+    
+    for (const subject in subjectMeans) {
+        subjectMeans[subject] = subjectCounts[subject] > 0 ? subjectMeans[subject] / subjectCounts[subject] : 0;
+    }
+    
+    // Generate report HTML
+    let reportHTML = `
+        <div class="report">
+            <div class="report-header">
+                <h2>SCHOOL EXAMINATION REPORT</h2>
+                <p>${student.grade} - TERM 1, 2023</p>
+            </div>
+            
+            <div class="student-info">
+                <div>
+                    <p><strong>Name:</strong> ${student.studentName}</p>
+                    <p><strong>Registration No:</strong> ${student.regNumber}</p>
+                </div>
+                <div>
+                    <p><strong>Grade:</strong> ${student.grade}</p>
+                    <p><strong>Position:</strong> ${student.position || 'Not calculated'}</p>
+                </div>
+            </div>
+            
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Learning Area</th>
+                        <th>Marks Obtained</th>
+                        <th>Out Of</th>
+                        <th>Percentage</th>
+                        <th>Rubric Score</th>
+                        <th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    let totalRubricScore = 0;
+    let subjectCount = 0;
+    const chartData = {
+        labels: [],
+        studentScores: [],
+        meanScores: []
+    };
+    
+    student.subjects.forEach(subject => {
+        const percentage = (subject.marks / subject.outOf) * 100;
+        const rubricInfo = getRubricInfo(percentage, rubricRanges);
+        
+        reportHTML += `
+            <tr>
+                <td>${subject.subject}</td>
+                <td>${subject.marks}</td>
+                <td>${subject.outOf}</td>
+                <td>${percentage.toFixed(2)}%</td>
+                <td>${rubricInfo.score}</td>
+                <td>${rubricInfo.grade}</td>
+            </tr>
+        `;
+        
+        totalRubricScore += rubricInfo.score;
+        subjectCount++;
+        
+        // Add data for chart
+        chartData.labels.push(subject.subject);
+        chartData.studentScores.push(percentage);
+        chartData.meanScores.push(subjectMeans[subject.subject] || 0);
+    });
+    
+    const averageRubricScore = subjectCount > 0 ? (totalRubricScore / subjectCount).toFixed(2) : 0;
+    
+    reportHTML += `
+                </tbody>
+            </table>
+            
+            <p><strong>Average Rubric Score:</strong> ${averageRubricScore}</p>
+            
+            <div class="chart-container">
+                <canvas id="performanceChart"></canvas>
+            </div>
+            
+            <div class="comments-section">
+                <div class="comment-box">
+                    <p><strong>Class Teacher's Comments:</strong></p>
+                    <p>${getRandomComment(averageRubricScore)}</p>
+                    <div class="signature-line">
+                        <span>Signature: _________________________</span>
+                        <span>Date: ${new Date().toLocaleDateString()}</span>
+                    </div>
+                </div>
+                
+                <div class="comment-box">
+                    <p><strong>Principal's Comments:</strong></p>
+                    <p>${getPrincipalComment(averageRubricScore)}</p>
+                    <div class="signature-line">
+                        <span>Signature: _________________________</span>
+                        <span>Date: ${new Date().toLocaleDateString()}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stamp-area">
+                <p>OFFICIAL SCHOOL STAMP</p>
+                <div style="height: 50px; border: 1px dashed #000; width: 150px;"></div>
+            </div>
+            
+            <div class="footer-note">
+                <p>This is a system generated report and is only valid with official school stamp.</p>
+            </div>
+        </div>
+    `;
+    
+    // Show in modal
+    const reportPreview = document.getElementById('reportPreview');
+    reportPreview.innerHTML = reportHTML;
+    
+    // Create chart
+    createPerformanceChart(chartData);
+    
+    const modal = document.getElementById('reportModal');
+    modal.style.display = 'block';
+    
+    // Show d
